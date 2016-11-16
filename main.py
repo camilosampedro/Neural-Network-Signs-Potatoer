@@ -23,6 +23,7 @@ import cv2
 from sklearn.neural_network import MLPClassifier
 import tkinter as tk
 from tkinter import filedialog
+from DatabaseReader import DatabaseReader
 
 
 # -----------------------------------------------------------------------------
@@ -37,6 +38,8 @@ image_folder = "./images/"
 # -----------------------------------------------------------------------------
 def main(args):
     files = ask_for_files()
+    database_reader = DatabaseReader('database.csv')
+    image_tag_database = database_reader.read_database()
     if len(files):
         print("Checking for files: %s" % (str(files)))
     else:
@@ -64,7 +67,7 @@ def ask_for_files():
     root.withdraw()
     return filedialog.askopenfilename(
         filetypes=(
-            ("Images", "*.ppm,*.jpg"),
+            ("Images", "*.ppm;*.jpg"),
             ("All files", "*.*")),
         initialdir=image_folder,
         multiple=True,

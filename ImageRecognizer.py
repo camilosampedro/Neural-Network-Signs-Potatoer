@@ -14,3 +14,10 @@ class ImageRecognizer():
 
     def __init__(self, image_path):
         print("Analyzing %s" % image_path)
+        self.image_path = image_path
+
+    def extract_characteristics(self):
+        self.raw_image_read = ImageRecognizer.read_image(self.image_path)
+
+    def extract_shapes(self):
+        print("Pending extract_shapes")
