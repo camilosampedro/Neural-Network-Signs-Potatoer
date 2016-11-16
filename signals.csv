@@ -1,0 +1,6 @@
+output,tag string
+0,Nothing
+1,Speed limit
+2,Mandatory signal
+3,Preventive signal
+4,Information signal
