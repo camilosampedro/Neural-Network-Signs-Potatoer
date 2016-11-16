@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
-# ------ BLEETANIS ------------------------------------------------------------
-# ------ Juego básico con cámara en OpenCV ------------------------------------
+# ------ NEURAL NETWORK SIGNS POTATOER ----------------------------------------
+# ------ Basic OpenCV Neural Network that recognizes transit signals ----------
 # ------ Por: Camilo A. Sampedro camilo.sampedro@udea.edu.co ------------------
 # ------      Estudiante ingeniería de sistemas, Universidad de Antioquia -----
 # ------      CC 1037640884 ---------------------------------------------------

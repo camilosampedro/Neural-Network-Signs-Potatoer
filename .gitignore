@@ -2,6 +2,9 @@
 images_train/
 images_test/
 
+# LibreOffice locks
+.~lock.*#
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
