@@ -86,5 +86,4 @@ def read_image(image_path):
 def create_neural_network(alpha):
     return MLPClassifier(alpha=alpha, random_state=1)
 
-
 main(sys.argv)

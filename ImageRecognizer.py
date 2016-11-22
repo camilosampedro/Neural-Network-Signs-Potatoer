@@ -15,9 +15,15 @@ class ImageRecognizer():
     def __init__(self, image_path):
         print("Analyzing %s" % image_path)
         self.image_path = image_path
+        self.raw_image = ImageRecognizer.read_image(self.image_path)
 
     def extract_characteristics(self):
-        self.raw_image_read = ImageRecognizer.read_image(self.image_path)
+        print("Pending extract_characteristics")
 
     def extract_shapes(self):
         print("Pending extract_shapes")
+
+    def extract_color(self, color):
+        img = cv2.GaussianBlur(np.copy(self.raw_image), (5, 5), 0)
+
+    def has_color(self, color):
