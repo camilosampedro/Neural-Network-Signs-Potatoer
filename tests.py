@@ -3,16 +3,24 @@ import cv2
 import numpy as np
 
 # 359*255/360
-lower_red1 = np.array([0, 45, 30], dtype="uint8")
-upper_red1 = np.array([15, 245, 235], dtype="uint8")
-lower_red2 = np.array([170, 45, 30], dtype="uint8")
-upper_red2 = np.array([255, 245, 235], dtype="uint8")
-image_path = "./images_train/25/00009.ppm"
+lower_red1 = np.array([0, 45, 15], dtype="uint8")
+upper_red1 = np.array([15, 245, 230], dtype="uint8")
+lower_red2 = np.array([170, 45, 15], dtype="uint8")
+upper_red2 = np.array([255, 245, 230], dtype="uint8")
+lower_black = np.array([0, 0, 0], dtype="uint8")
+upper_black = np.array([255, 255, 100], dtype="uint8")
+image_path = "./images_train/00/00002.ppm"
 image = cv2.imread(image_path)
+image = cv2.equalizeHist(image)
 img = cv2.GaussianBlur(np.copy(image), (5, 5), 0)
 # img = cv2.blur(np.copy(image), (5, 5))
 # img = cv2.medianBlur(np.copy(image), 5)
 hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+kernel_size = 3
+lowThreshold = 50
+maxThreshold = 100
+ratio = 3
 
 # with open('hsv.csv', 'w') as csvfile:
 # spamwriter = csv.writer(csvfile, delimiter=',',
@@ -43,7 +51,9 @@ while True:
     hsv_mask_2 = cv2.inRange(hsv_2, lower_red2, upper_red2)
     hsv_mask = np.empty_like(hsv_mask_1)
     hsv_mask = cv2.bitwise_or(hsv_mask_1, hsv_mask_2, hsv_mask)
-    circles = cv2.HoughCircles(hsv_mask, cv2.HOUGH_GRADIENT, 1, 20,
+    detected_edges = cv2.Canny(hsv_mask, lowThreshold, lowThreshold * ratio,
+                               kernel_size)
+    circles = cv2.HoughCircles(detected_edges, cv2.HOUGH_GRADIENT, 1, 20,
                                param1=50, param2=30, minRadius=0, maxRadius=0)
     # ensure at least some circles were found
     if circles is not None:
@@ -62,13 +72,29 @@ while True:
     cv2.imshow("m1", hsv_mask_1)
     cv2.imshow("m2", hsv_mask_2)
     cv2.imshow("join", hsv_mask)
+    cv2.imshow("de", detected_edges)
 
-    mser = cv2.MSER_create()
-    regions = mser.detect(hsv_mask, None)
-    for p in regions:
-        print(p.pt)
+    # mser = cv2.MSER_create()
+    # regions = mser.detect(hsv_mask, None)
+    # for p in regions:
+    #     print(np.array(p.pt))
+    # points = np.array([np.array(p.pt) for p in regions])
+    # hulls = cv2.convexHull(points)
+    # hulls = [cv2.convexHull(np.array(p)) for p in regions]
 
-    #hulls = [cv2.convexHull(p.pt) for p in regions]
+    # contours = cv2.findContours(detected_edges, cv2.RETR_TREE,
+    #                             cv2.CHAIN_APPROX_SIMPLE)
+    #
+    # aprox = np.zeros(len(detected_edges))
+    # for i in range(len(contours)):
+    #     aprox = cv2.approxPolyDP(contours[i], cv2.arcLength(contours[i], True
+    # )
+    #                              * 0.02, True)
+    #     print(aprox)
+    # cv2.drawContours(image=image, contours=contours, contourIdx=-1, color=15)
+    # cv2.imshow("lados", image)
+    black_mask = cv2.inRange(hsv_image, lower_black, upper_black)
+    cv2.imshow("Black", black_mask)
 
     if cv2.waitKey(0) == 27:
         break
