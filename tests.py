@@ -1,13 +1,13 @@
 import cv2
-import csv
+# import csv
 import numpy as np
 
 # 359*255/360
-lower_red1 = np.array([0, 40, 15], dtype="uint8")
-upper_red1 = np.array([15, 245, 245], dtype="uint8")
-lower_red2 = np.array([170, 40, 15], dtype="uint8")
-upper_red2 = np.array([255, 245, 245], dtype="uint8")
-image_path = "./images_train/07/00033.ppm"
+lower_red1 = np.array([0, 45, 30], dtype="uint8")
+upper_red1 = np.array([15, 245, 235], dtype="uint8")
+lower_red2 = np.array([170, 45, 30], dtype="uint8")
+upper_red2 = np.array([255, 245, 235], dtype="uint8")
+image_path = "./images_train/25/00009.ppm"
 image = cv2.imread(image_path)
 img = cv2.GaussianBlur(np.copy(image), (5, 5), 0)
 # img = cv2.blur(np.copy(image), (5, 5))
@@ -41,8 +41,34 @@ while True:
     np.copyto(hsv_2, hsv_image)
     hsv_mask_1 = cv2.inRange(hsv_1, lower_red1, upper_red1)
     hsv_mask_2 = cv2.inRange(hsv_2, lower_red2, upper_red2)
-
+    hsv_mask = np.empty_like(hsv_mask_1)
+    hsv_mask = cv2.bitwise_or(hsv_mask_1, hsv_mask_2, hsv_mask)
+    circles = cv2.HoughCircles(hsv_mask, cv2.HOUGH_GRADIENT, 1, 20,
+                               param1=50, param2=30, minRadius=0, maxRadius=0)
+    # ensure at least some circles were found
+    if circles is not None:
+        output = image.copy()
+        # convert the (x, y) coordinates and radius of the circles to integers
+        circles = np.round(circles[0, :]).astype("int")
+        # loop over the (x, y) coordinates and radius of the circles
+        for (x, y, r) in circles:
+            # draw the circle in the output image, then draw a rectangle
+            # corresponding to the center of the circle
+            cv2.circle(output, (x, y), r, (0, 255, 0), 4)
+            cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5),
+                          (0, 128, 255), -1)
+        # show the output image
+        cv2.imshow("output", np.hstack([image, output]))
     cv2.imshow("m1", hsv_mask_1)
     cv2.imshow("m2", hsv_mask_2)
+    cv2.imshow("join", hsv_mask)
+
+    mser = cv2.MSER_create()
+    regions = mser.detect(hsv_mask, None)
+    for p in regions:
+        print(p.pt)
+
+    #hulls = [cv2.convexHull(p.pt) for p in regions]
+
     if cv2.waitKey(0) == 27:
         break

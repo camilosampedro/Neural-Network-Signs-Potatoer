@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import Color
 
 
 class ImageRecognizer():
@@ -25,5 +26,9 @@ class ImageRecognizer():
 
     def extract_color(self, color):
         img = cv2.GaussianBlur(np.copy(self.raw_image), (5, 5), 0)
+        hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        if color == Color.RED:
+            hsv_mask_1 = cv2.inRange(hsv_1, lower_red1, upper_red1)
+            hsv_mask_2 = cv2.inRange(hsv_2, lower_red2, upper_red2)
 
     def has_color(self, color):
