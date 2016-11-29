@@ -8,9 +8,15 @@ class DatabaseReader(object):
         self.database_path = database_path
 
     def read_database(self):
-        self.database_reader = csv.reader(self.csv_file, delimiter=',')
-        return self.database_reader
+        self.database = csv.reader(self.csv_file, delimiter=',')
+        self.database = list(map(lambda x: x, self.database))
+        return self.database
 
     def apply_function(self, function):
-        mapped_database = map(function, self.database_reader)
-        return mapped_database
+        return map(function, self.database_reader)
+
+    def size(self):
+        count = 0
+        for image in self.database_reader:
+            count += 1
+        return count

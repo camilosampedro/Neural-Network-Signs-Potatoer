@@ -17,13 +17,14 @@
 # -----------------------------------------------------------------------------
 # - 1. Needed libraries -------------------------------------------------------
 # -----------------------------------------------------------------------------
+# import numpy as np
 import sys
-import numpy as np
 import cv2
 from sklearn.neural_network import MLPClassifier
 import tkinter as tk
 from tkinter import filedialog
 from DatabaseReader import DatabaseReader
+from ImageRecognizer import ImageRecognizer
 
 
 # -----------------------------------------------------------------------------
@@ -37,31 +38,50 @@ image_folder = "./images/"
 # - 3. Global methods ---------------------------------------------------------
 # -----------------------------------------------------------------------------
 def main(args):
-    files = ask_for_files()
-    database_reader = DatabaseReader('database.csv')
-    image_tag_database = database_reader.read_database()
-    if len(files):
-        print("Checking for files: %s" % (str(files)))
-    else:
-        print("Program canceled by the user")
-        sys.exit()
-    print(len(args))
     if len(args) != 1:
-        if args[0] == 'test':
-            alphas = np.logspace(-5, 3, 5)
-            classifiers = []
-            for i in alphas:
-                classifiers.append(create_neural_network(alpha=i))
+        if args[1] == 'train':
+            print("Training database")
+            database_reader = DatabaseReader('database.csv')
+            image_tag_database = database_reader.read_database()
+            image_count = len(image_tag_database)
+            print("Database has %d rows" % image_count)
+            idx = 0
+            for image_row in image_tag_database:
+                idx += 1
+                if idx != 1:
+                    image_path = image_row[0]
+                    img_rec = ImageRecognizer(image_path)
+                    characteristics = img_rec.extract_characteristics()
+                    print("%d%%: %s - %s" % (idx * 100 / image_count,
+                                             image_path, str(characteristics)))
+        elif args[1] == 'test':
+            print("Testing")
         else:
-            alpha = float(args[0])
-            classifier = create_neural_network(alpha=alpha)
-    else:
-        alpha = global_alpha
-        classifier = create_neural_network(alpha=alpha)
+            print("Showing to the teacher :P")
+    # files = ask_for_files()
+    # database_reader = DatabaseReader('database.csv')
+    # image_tag_database = database_reader.read_database()
+    # if len(files):
+    #     print("Checking for files: %s" % (str(files)))
+    # else:
+    #     print("Program canceled by the user")
+    #     sys.exit()
+    # print(len(args))
+    # if len(args) != 1:
+    #     if args[0] == 'test':
+    #         alphas = np.logspace(-5, 3, 5)
+    #         classifiers = []
+    #         for i in alphas:
+    #             classifiers.append(create_neural_network(alpha=i))
+    #     else:
+    #         alpha = float(args[0])
+    #         classifier = create_neural_network(alpha=alpha)
+    # else:
+    #     alpha = global_alpha
+    #     classifier = create_neural_network(alpha=alpha)
 
 
 # Ask user for files
-#
 def ask_for_files():
     root = tk.Tk()
     root.withdraw()
@@ -85,5 +105,6 @@ def read_image(image_path):
 
 def create_neural_network(alpha):
     return MLPClassifier(alpha=alpha, random_state=1)
+
 
 main(sys.argv)
