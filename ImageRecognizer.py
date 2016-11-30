@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 from Color import Color
+from sklearn.externals import joblib
+from skimage.feature import hog
 
 
 class ImageRecognizer(object):
@@ -18,6 +20,7 @@ class ImageRecognizer(object):
     number_7 = cv2.imread("numbers/7.bmp", 0)
     number_8 = cv2.imread("numbers/8.bmp", 0)
     number_9 = cv2.imread("numbers/9.bmp", 0)
+    clf = joblib.load("number_classifier.pkl")
 
     @staticmethod
     def get_number(number):
@@ -103,24 +106,30 @@ class ImageRecognizer(object):
         return circles is not None
 
     def extract_numbers(self):
+        print("Extracting numbers")
         mask = self.extract_color(Color.BLACK)
-        h, w = mask.shape[:2]
-        cv2.imshow("Mask", mask)
-        for i in range(10):
-            number = self.get_number(i)
-            number = cv2.resize(number, (h, w))
-            match = cv2.matchTemplate(mask, number,
-                                      cv2.TM_SQDIFF_NORMED)
-            match = cv2.normalize(match, match)
-            minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(match)
-            print(minLoc)
-            other = np.copy(self.raw_image)
-            other[minLoc[0] - 2:minLoc[0] + 2,
-                  minLoc[1] - 2:minLoc[1] + 2] = 255
-            print("Found %d" % i)
-            cv2.imshow("Found %d" % i, other)
-            # print("%d %d %d %d" % (minVal, maxVal, minLoc, maxLoc))
-            # cv2.imshow("match", match)
-            cv2.waitKey(0)
-
+        ctrs = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+                                cv2.CHAIN_APPROX_SIMPLE)[0]
+        rects = [cv2.boundingRect(ctr) for ctr in ctrs]
+        for rect in rects:
+            print(rect)
+            cv2.rectangle(self.raw_image, (rect[0], rect[1]),
+                          (rect[0] + rect[2], rect[1] + rect[3]),
+                          (0, 255, 0), 3)
+            leng = int(rect[3] * 1.6)
+            pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
+            pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
+            roi = mask[pt1:pt1 + leng, pt2:pt2 + leng]
+            cv2.imshow("roi", roi)
+            cv2.waitKey()
+            roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
+            roi = cv2.dilate(roi, (3, 3))
+            roi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(14, 14),
+                             cells_per_block=(1, 1), visualise=False)
+            nbr = ImageRecognizer.clf.predict(
+                np.array([roi_hog_fd], 'float64'))
+            cv2.putText(self.raw_image, str(int(nbr[0])), (rect[0], rect[1]),
+                        cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3)
+        cv2.imshow("Resulting Image with Rectangular ROIs", self.raw_image)
+        cv2.waitKey()
         print("Pending extract_numbers")

@@ -1,6 +1,11 @@
 import cv2
 # import csv
 import numpy as np
+from ImageRecognizer import ImageRecognizer
+
+img_rec = ImageRecognizer("./images_train/00/00002.ppm")
+characteristics = img_rec.extract_characteristics()
+
 
 # 359*255/360
 lower_red1 = np.array([0, 45, 15], dtype="uint8")
