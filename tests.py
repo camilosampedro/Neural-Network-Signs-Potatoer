@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from ImageRecognizer import ImageRecognizer
 
-img_rec = ImageRecognizer("./images_train/00/00002.ppm")
+img_rec = ImageRecognizer("./images_train/00/00001.ppm")
 characteristics = img_rec.extract_characteristics()
 
 
@@ -14,7 +14,7 @@ lower_red2 = np.array([170, 45, 15], dtype="uint8")
 upper_red2 = np.array([255, 245, 230], dtype="uint8")
 lower_black = np.array([0, 0, 0], dtype="uint8")
 upper_black = np.array([255, 255, 100], dtype="uint8")
-image_path = "./images_train/00/00002.ppm"
+image_path = "./images_train/00/00003.ppm"
 image = cv2.imread(image_path)
 image = cv2.equalizeHist(image)
 img = cv2.GaussianBlur(np.copy(image), (5, 5), 0)
@@ -74,10 +74,10 @@ while True:
                           (0, 128, 255), -1)
         # show the output image
         cv2.imshow("output", np.hstack([image, output]))
-    cv2.imshow("m1", hsv_mask_1)
-    cv2.imshow("m2", hsv_mask_2)
-    cv2.imshow("join", hsv_mask)
-    cv2.imshow("de", detected_edges)
+        cv2.imshow("m1", hsv_mask_1)
+        cv2.imshow("m2", hsv_mask_2)
+        cv2.imshow("join", hsv_mask)
+        cv2.imshow("de", detected_edges)
 
     # mser = cv2.MSER_create()
     # regions = mser.detect(hsv_mask, None)

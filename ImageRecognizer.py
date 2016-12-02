@@ -108,28 +108,52 @@ class ImageRecognizer(object):
     def extract_numbers(self):
         print("Extracting numbers")
         mask = self.extract_color(Color.BLACK)
+        # cv2.imshow("mask", mask)
+        # cv2.waitKey()
         ctrs = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
-                                cv2.CHAIN_APPROX_SIMPLE)[0]
+                                cv2.CHAIN_APPROX_SIMPLE)[1]
         rects = [cv2.boundingRect(ctr) for ctr in ctrs]
+        numbers = []
         for rect in rects:
             print(rect)
-            cv2.rectangle(self.raw_image, (rect[0], rect[1]),
+            im2 = self.raw_image.copy()
+            cv2.rectangle(im2, (rect[0], rect[1]),
                           (rect[0] + rect[2], rect[1] + rect[3]),
                           (0, 255, 0), 3)
-            leng = int(rect[3] * 1.6)
-            pt1 = int(rect[1] + rect[3] // 2 - leng // 2)
-            pt2 = int(rect[0] + rect[2] // 2 - leng // 2)
-            roi = mask[pt1:pt1 + leng, pt2:pt2 + leng]
-            cv2.imshow("roi", roi)
-            cv2.waitKey()
-            roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
-            roi = cv2.dilate(roi, (3, 3))
-            roi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(14, 14),
-                             cells_per_block=(1, 1), visualise=False)
-            nbr = ImageRecognizer.clf.predict(
-                np.array([roi_hog_fd], 'float64'))
-            cv2.putText(self.raw_image, str(int(nbr[0])), (rect[0], rect[1]),
-                        cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3)
-        cv2.imshow("Resulting Image with Rectangular ROIs", self.raw_image)
-        cv2.waitKey()
-        print("Pending extract_numbers")
+            # cv2.imshow("im2", im2)
+            # cv2.waitKey()
+            if(abs(rect[2] - rect[0]) >= 1 and abs(rect[3] - rect[1]) >= 1):
+                print("applied")
+                cv2.rectangle(im2, (rect[0], rect[1]),
+                              (rect[0] + rect[2], rect[1] + rect[3]),
+                              (0, 255, 0), 3)
+                # leng1 = int(rect[3] * 1.6)
+                # leng2 = int(rect[2] * 1.6)
+                pt1_x = rect[0]  # int(rect[1] + rect[3] // 2 - leng1 // 2)
+                pt1_y = rect[1]  # int(rect[0] + rect[2] // 2 - leng2 // 2)
+                pt2_x = rect[2]  # int(rect[1] + rect[3] // 2 - leng1 // 2)
+                pt2_y = rect[3]  # int(rect[0] + rect[2] // 2 - leng2 // 2)
+                if pt2_x > pt1_x and pt2_y > pt1_y:
+                    roi = mask[pt1_x:pt2_x, pt1_y:pt2_y]
+                elif pt2_x > pt1_x and pt2_y < pt1_y:
+                    roi = mask[pt1_x:pt2_x, pt2_y:pt1_y]
+                elif pt2_x < pt1_x and pt2_y > pt1_y:
+                    roi = mask[pt2_x:pt1_x, pt1_y:pt2_y]
+                else:
+                    roi = mask[pt2_x:pt1_x, pt2_y:pt1_y]
+                # cv2.imshow("roi", roi)
+                # cv2.waitKey()
+                roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
+                roi = cv2.dilate(roi, (3, 3))
+                roi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(14, 14),
+                                 cells_per_block=(1, 1), visualise=False)
+                nbr = ImageRecognizer.clf.predict(
+                    np.array([roi_hog_fd], 'float64'))
+                # print(nbr)
+                numbers.append(nbr)
+                cv2.putText(self.raw_image, str(int(nbr[0])),
+                            (rect[0], rect[1]),
+                            cv2.FONT_HERSHEY_DUPLEX, 2, (0, 255, 255), 3)
+        # cv2.imshow("Resulting Image with Rectangular ROIs", self.raw_image)
+        # cv2.waitKey()
+        return numbers
