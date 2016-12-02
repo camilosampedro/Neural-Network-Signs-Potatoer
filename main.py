@@ -69,7 +69,8 @@ def main(args):
                     x.append(characteristics)
                     print("%d%%: %s - %s" % (idx * 100 / image_count,
                                              image_path, str(characteristics)))
-                    # Append the output to the output list
+                    # Append the output to the output list. A translation of
+                    # this class can be found on signals.csv
                     y.append(image_row[1])
                     print("Output: %s" % image_row[1])
             # Alphas (Trying several for knowing which one is better)
