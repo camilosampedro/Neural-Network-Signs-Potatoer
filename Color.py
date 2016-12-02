@@ -16,7 +16,7 @@ class Color():
 
     # Black
     LOWER_BLACK = np.array([0, 0, 0], dtype="uint8")
-    UPPER_BLACK = np.array([255, 255, 100], dtype="uint8")
+    UPPER_BLACK = np.array([255, 150, 80], dtype="uint8")
 
     def get(color):
         return {

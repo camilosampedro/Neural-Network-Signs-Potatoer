@@ -17,14 +17,16 @@
 # -----------------------------------------------------------------------------
 # - 1. Needed libraries -------------------------------------------------------
 # -----------------------------------------------------------------------------
-# import numpy as np
 import sys
 import cv2
 from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 import tkinter as tk
 from tkinter import filedialog
 from DatabaseReader import DatabaseReader
 from ImageRecognizer import ImageRecognizer
+import numpy as np
 
 
 # -----------------------------------------------------------------------------
@@ -32,6 +34,7 @@ from ImageRecognizer import ImageRecognizer
 # -----------------------------------------------------------------------------
 global_alpha = -3
 image_folder = "./images/"
+h = .02
 
 
 # -----------------------------------------------------------------------------
@@ -46,14 +49,50 @@ def main(args):
             image_count = len(image_tag_database)
             print("Database has %d rows" % image_count)
             idx = 0
+            x = []
+            y = []
             for image_row in image_tag_database:
                 idx += 1
                 if idx != 1:
                     image_path = image_row[0]
                     img_rec = ImageRecognizer(image_path)
                     characteristics = img_rec.extract_characteristics()
+                    x.append(characteristics)
                     print("%d%%: %s - %s" % (idx * 100 / image_count,
                                              image_path, str(characteristics)))
+                    y.append(image_row[1])
+                    print("Output: %s" % image_row[1])
+            alphas = np.logspace(-10, 3, 10)
+            classifiers = []
+            for i in alphas:
+                classifiers.append(MLPClassifier(alpha=i, random_state=1,
+                                                 hidden_layer_sizes=(100,)))
+            names = []
+            for i in alphas:
+                names.append('alpha ' + str(i))
+
+            x = StandardScaler().fit_transform(x)
+            x_train, x_test, y_train, y_test = train_test_split(x, y,
+                                                                test_size=.4)
+            x_min, x_max = x[:, 0].min() - .5, x[:, 0].max() + .5
+            y_min, y_max = x[:, 1].min() - .5, x[:, 1].max() + .5
+
+            xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                                 np.arange(y_min, y_max, h))
+            # iterate over classifiers
+            for name, clf in zip(names, classifiers):
+                # ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
+                clf.fit(x_train, y_train)
+                score = clf.score(x_test, y_test)
+                print("%s: %f" % (name, score))
+                # Plot the decision boundary. For that, we will assign a color
+                # to each
+                # point in the mesh [x_min, x_max]x[y_min, y_max].
+                # if hasattr(clf, "decision_function"):
+                #     Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+                # else:
+                #     Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:,
+                # 1]
         elif args[1] == 'test':
             print("Testing")
         else:

@@ -56,13 +56,19 @@ class ImageRecognizer(object):
         print("Analyzing %s" % image_path)
         self.image_path = image_path
         self.raw_image = ImageRecognizer.read_image(self.image_path)
+        self.gray_image = cv2.cvtColor(self.raw_image, cv2.COLOR_BGR2GRAY)
+        self.equalized_gray = cv2.equalizeHist(self.gray_image,
+                                               self.gray_image)
 
     # Characteristic array: [isRed, hasRedCircle, numberInside]
     def extract_characteristics(self):
         is_red = self.has_color(Color.RED)
         has_red_circle = self.has_circle(Color.RED)
         number_inside = self.extract_numbers()
-        return [is_red, has_red_circle, number_inside]
+        numbers_one_hot = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        for number in number_inside:
+            numbers_one_hot[number] = 1
+        return [is_red, has_red_circle] + numbers_one_hot
 
     def extract_shapes(self):
         print("Pending extract_shapes")
@@ -98,16 +104,35 @@ class ImageRecognizer(object):
         circles = cv2.HoughCircles(detected_edges, cv2.HOUGH_GRADIENT, 1, 20,
                                    param1=50, param2=30, minRadius=0,
                                    maxRadius=0)
+        # print("Circles size: %d" % len(circles))
+        # if circles is not None:
+        #     circle = circles[0][0]
+        # print(circle)
+        # # mask = cv2.circle(self.raw_image, (circle[0], circle[1]),
+        # #                   circle[2], 255, 1)
+        # # rect = cv2.boundingRect(circle[0] - circle[2], circle[1] -
+        # #                         circle[2], 2 * circle[2], 2 * circle[2])
+        # res = np.zeros_like(self.raw_image, dtype="uint8")
+        # cv2.circle(res, (circle[0], circle[1]),
+        #            circle[2], 255, thickness=-1)
+        # self.res = cv2.bitwise_or(
+        #     self.raw_image, self.raw_image, mask=res)
+        # cv2.imshow("res", self.res)
+        # cv2.waitKey()
         return circles
 
     def has_circle(self, color):
         mask = self.extract_color(color)
         circles = self.extract_circle(mask)
-        return circles is not None
+        has_circle = circles is not None
+        return has_circle
 
     def extract_numbers(self):
         print("Extracting numbers")
         mask = self.extract_color(Color.BLACK)
+        # ret, mask = cv2.threshold(self.equalized_gray, 110, 255,
+        #                           cv2.THRESH_BINARY_INV)
+
         # cv2.imshow("mask", mask)
         # cv2.waitKey()
         ctrs = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
@@ -115,7 +140,7 @@ class ImageRecognizer(object):
         rects = [cv2.boundingRect(ctr) for ctr in ctrs]
         numbers = []
         for rect in rects:
-            print(rect)
+            # print(rect)
             im2 = self.raw_image.copy()
             cv2.rectangle(im2, (rect[0], rect[1]),
                           (rect[0] + rect[2], rect[1] + rect[3]),
@@ -123,7 +148,7 @@ class ImageRecognizer(object):
             # cv2.imshow("im2", im2)
             # cv2.waitKey()
             if(abs(rect[2] - rect[0]) >= 1 and abs(rect[3] - rect[1]) >= 1):
-                print("applied")
+                # print("applied")
                 cv2.rectangle(im2, (rect[0], rect[1]),
                               (rect[0] + rect[2], rect[1] + rect[3]),
                               (0, 255, 0), 3)
@@ -133,16 +158,20 @@ class ImageRecognizer(object):
                 pt1_y = rect[1]  # int(rect[0] + rect[2] // 2 - leng2 // 2)
                 pt2_x = rect[2]  # int(rect[1] + rect[3] // 2 - leng1 // 2)
                 pt2_y = rect[3]  # int(rect[0] + rect[2] // 2 - leng2 // 2)
-                if pt2_x > pt1_x and pt2_y > pt1_y:
-                    roi = mask[pt1_x:pt2_x, pt1_y:pt2_y]
-                elif pt2_x > pt1_x and pt2_y < pt1_y:
-                    roi = mask[pt1_x:pt2_x, pt2_y:pt1_y]
-                elif pt2_x < pt1_x and pt2_y > pt1_y:
-                    roi = mask[pt2_x:pt1_x, pt1_y:pt2_y]
-                else:
-                    roi = mask[pt2_x:pt1_x, pt2_y:pt1_y]
-                # cv2.imshow("roi", roi)
+                cv2.rectangle(im2, pt1=(pt1_x, pt1_y), pt2=(pt2_x, pt2_y),
+                              color=(0, 255, 0))
+                # cv2.imshow("rect", im2)
+                # cv2.imshow("mask", mask)
                 # cv2.waitKey()
+                if pt2_x > pt1_x and pt2_y > pt1_y:
+                    roi = mask[pt1_x - 1:pt2_x + 1, pt1_y - 1:pt2_y + 1]
+                elif pt2_x > pt1_x and pt2_y < pt1_y:
+                    roi = mask[pt1_x - 1:pt2_x + 1, pt2_y - 1:pt1_y + 1]
+                elif pt2_x < pt1_x and pt2_y > pt1_y:
+                    roi = mask[pt2_x - 1:pt1_x + 1, pt1_y - 1:pt2_y + 1]
+                else:
+                    roi = mask[pt2_x - 1:pt1_x + 1, pt2_y - 1:pt1_y + 1]
+                print("%f %f %f %f" % (pt1_x, pt1_y, pt2_x, pt2_y))
                 roi = cv2.resize(roi, (28, 28), interpolation=cv2.INTER_AREA)
                 roi = cv2.dilate(roi, (3, 3))
                 roi_hog_fd = hog(roi, orientations=9, pixels_per_cell=(14, 14),
